@@ -1,0 +1,25 @@
+name: github-actions-insert-mode
+
+on:
+  workflow_dispatch:
+    #acceptable inputs by this workflow:
+    inputs:
+      name: 
+        #set description first to greet the name
+        description: 'Greetings'
+        #set default value for name if no input passed
+        default: 'Ujjawal'
+        #set to true if input is manadatory for workflow to run
+        required: true
+
+#create jobs. A workflow can have one or more jobs
+jobs:
+  #set the name of the job
+  greet:
+    #set the environment whare the job will run
+    runs-on: ubuntu-latest
+
+    #lets define the tasks that will be executed as part of the job
+    steps:
+      - name: Greet the learner
+        run: echo "Hello ${{ github.event.inputs.name }}"
