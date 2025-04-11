@@ -1,0 +1,24 @@
+name: build-docker-image
+
+on:
+  push:
+    branches: none #[ main ]
+  pull_request:
+    branches: none #[main]
+
+  workflow_dispatch:
+
+jobs:
+
+  build-container:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - name: Build the docker image
+        working-directory: 03-app-dotnet
+        run: docker build . --file Dockerfile --tag my-app-dotnet:$(date +%s)
+
