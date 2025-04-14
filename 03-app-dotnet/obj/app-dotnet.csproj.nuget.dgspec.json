@@ -1,28 +1,26 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Projects\\github-actions-course\\03-app-dotnet\\app-dotnet.csproj": {}
+    "/home/ukhare/github_actions_tutorial/github-actions/03-app-dotnet/app-dotnet.csproj": {}
   },
   "projects": {
-    "D:\\Projects\\github-actions-course\\03-app-dotnet\\app-dotnet.csproj": {
+    "/home/ukhare/github_actions_tutorial/github-actions/03-app-dotnet/app-dotnet.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Projects\\github-actions-course\\03-app-dotnet\\app-dotnet.csproj",
+        "projectUniqueName": "/home/ukhare/github_actions_tutorial/github-actions/03-app-dotnet/app-dotnet.csproj",
         "projectName": "app-dotnet",
-        "projectPath": "D:\\Projects\\github-actions-course\\03-app-dotnet\\app-dotnet.csproj",
-        "packagesPath": "C:\\Users\\hodellai\\.nuget\\packages\\",
-        "outputPath": "D:\\Projects\\github-actions-course\\03-app-dotnet\\obj\\",
+        "projectPath": "/home/ukhare/github_actions_tutorial/github-actions/03-app-dotnet/app-dotnet.csproj",
+        "packagesPath": "/home/ukhare/.nuget/packages/",
+        "outputPath": "/home/ukhare/github_actions_tutorial/github-actions/03-app-dotnet/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\hodellai\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/home/ukhare/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net6.0"
         ],
         "sources": {
-          "https://pkgs.dev.azure.com/houssemdellai/MyLibrary-Nuget/_packaging/MyLibrary-Nuget-02/nuget/v3/index.json": {},
-          "https://pkgs.dev.azure.com/houssemdellai/cardif-nuget/_packaging/cardif/nuget/v3/index.json": {},
-          "https://pkgs.dev.azure.com/houssemdellai/cardif-nuget/_packaging/cardif01/nuget/v3/index.json": {}
+          "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net6.0": {
@@ -45,10 +43,25 @@
             "net47",
             "net471",
             "net472",
-            "net48"
+            "net48",
+            "net481"
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[6.0.31, 6.0.31]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.linux-x64",
+              "version": "[6.0.31, 6.0.31]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[6.0.31, 6.0.31]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -57,7 +70,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.201\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/7.0.410/RuntimeIdentifierGraph.json"
         }
       }
     }
