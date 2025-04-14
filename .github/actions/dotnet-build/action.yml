@@ -1,0 +1,36 @@
+name: Dotnet Build
+description: Build a .NET project
+
+inputs:
+  project_path:
+    description: 'Path to .sln or .csproj file'
+    required: true
+  configuration:
+    description: 'Build configuration'
+    required: false
+    default: 'Release'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 7
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '7.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ inputs.project_path }}
+      shell: bash
+
+    - name: Build project
+      run: dotnet build ${{ inputs.project_path }} --configuration ${{ inputs.configuration }} --no-restore
+      shell: bash
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: '**/bin/${{ inputs.configuration }}/'

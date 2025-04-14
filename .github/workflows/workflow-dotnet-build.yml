@@ -1,0 +1,20 @@
+name: Build .NET App
+
+on:
+  push:
+    paths:
+      - '03-app-dotnet/**'
+  pull_request:
+    paths:
+      - '03-app-dotnet/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run custom .NET build action
+        uses: ./.github/actions/dotnet-build
+        with:
+          project_path: 03-app-dotnet/03-app-dotnet.csproj
+          configuration: Release
