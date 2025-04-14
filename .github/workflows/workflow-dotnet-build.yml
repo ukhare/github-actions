@@ -16,5 +16,5 @@ jobs:
       - name: Run custom .NET build action
         uses: ./.github/actions/dotnet-build
         with:
-          project_path: 03-app-dotnet/03-app-dotnet.csproj
+          project_path: 03-app-dotnet/app-dotnet.csproj
           configuration: Release
