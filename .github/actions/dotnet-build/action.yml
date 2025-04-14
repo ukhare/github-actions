@@ -22,11 +22,11 @@ runs:
         dotnet-version: '7.0.x'
 
     - name: Restore dependencies
-      run: dotnet restore ${{ inputs.project_path }}
+      run: dotnet restore "${{ inputs.project_path }}"
       shell: bash
 
     - name: Build project
-      run: dotnet build ${{ inputs.project_path }} --configuration ${{ inputs.configuration }} --no-restore
+      run: dotnet build "${{ inputs.project_path }}" --configuration "${{ inputs.configuration }}" --no-restore
       shell: bash
 
     - name: Upload build artifacts
