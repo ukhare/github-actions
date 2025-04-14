@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - '03-app-dotnet/**'
+      - '.github/workflows/dotnet-build.yml'
   pull_request:
     paths:
       - '03-app-dotnet/**'
+      - '.github/workflows/dotnet-build.yml'
 
 jobs:
   build:
