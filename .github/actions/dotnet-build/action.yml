@@ -16,11 +16,6 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup .NET 7
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '7.0.x'
-
     - name: Restore dependencies
       run: dotnet restore "${{ inputs.project_path }}"
       shell: bash
