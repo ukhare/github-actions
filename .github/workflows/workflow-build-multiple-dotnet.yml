@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        dotnet-version: [ '7.0.x' ]
         project:
           - project-name: 03-app-dotnet
             app-dir: 03-app-dotnet/app-dotnet.csproj
@@ -24,6 +25,11 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+        - name: Setup .NET ${{ matrix.dotnet-version }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
 
       - name: Build ${{ matrix.project.project-name }}
         uses: ./.github/actions/dotnet-build-action
