@@ -2,60 +2,75 @@ name: Build Multiple .NET Projects
 
 on:
   push:
-    branches:
-      - "master"
-      - "release"
-  
+    branches: [ "master", "release" ]
+
   pull_request:
-  
+
   workflow_dispatch:
     inputs:
-        run_test:
-          description: 'Run the test for dotnet-build-action'
-          required: true
-          default: 'false'
+      run_test:
+        description: 'Run the test for dotnet-build-action'
+        required: true
+        default: 'false'
+
 jobs:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set matrix based on event
+        id: set-matrix
+        run: |
+          echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
+          
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            run_test=$(jq -r '.inputs.run_test' "$GITHUB_EVENT_PATH")
+            if [[ "$run_test" == "true" ]]; then
+              matrix='[
+                {"project-name":"test-app-dotnet-01", "app-dir":"test-projects/test-app-dotnet-01"},
+                {"project-name":"test-app-dotnet-02", "app-dir":"test-projects/my-app-dotnet-02"}
+              ]'
+            else
+              matrix='[]'
+            fi
+          elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            matrix='[
+              {"project-name":"my-app-dotnet-01", "app-dir":"my-app-dotnet-01"},
+              {"project-name":"my-app-dotnet-02", "app-dir":"my-app-dotnet-02"}
+            ]'
+          else
+            matrix='[]'
+          fi
+
+          echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
 
   build:
+    needs: prepare-matrix
+    if: ${{ fromJson(needs.prepare-matrix.outputs.matrix) != '[]' }}
     runs-on: [self-hosted, medium-amd64]
-
     strategy:
       matrix:
-        dotnet-version: [ '7.0.x' ]
-        project:
-          - project-name: test-app-dotnet-01
-            app-dir: test-projects/test-app-dotnet-01
-          - project-name: test-app-dotnet-02
-            app-dir: test-projects/my-app-dotnet-02
-          #- project-name: my-app-dotnet-01
-          #  app-dir: my-app-dotnet-01
-          #- project-name: my-app-dotnet-02
-          #  app-dir: my-app-dotnet-02
+        include: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup .NET ${{ matrix.dotnet-version }}
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ matrix.dotnet-version }}
+          dotnet-version: '7.0.x'
 
-      - name: Create .NET Project - ${{ matrix.project.project-name }}
+      - name: Create .NET Project - ${{ matrix.project-name }}
         shell: bash
         run: |
-          dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
+          dotnet new console -n "${{ matrix.project-name }}" -o "${{ matrix.app-dir }}"
 
-      - name: Skip Test Project - ${{ matrix.project.project-name }}
-        shell: bash
-        run: |
-          echo "Skipping test project ${{ matrix.project.project-name }} since run_test is not enabled"
-          exit 0
-
-      - name: Build ${{ matrix.project.project-name }}
+      - name: Build ${{ matrix.project-name }}
         uses: ./.github/actions/dotnet-build-action
         with:
-          project-name: ${{ matrix.project.project-name }}
-          app-dir: ${{ matrix.project.app-dir }}/${{ matrix.project.project-name }}.csproj
+          project-name: ${{ matrix.project-name }}
+          app-dir: ${{ matrix.app-dir }}/${{ matrix.project-name }}.csproj
           build-configuration: Release
           upload_build: true
