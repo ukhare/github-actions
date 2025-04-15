@@ -9,6 +9,7 @@ on:
     paths:
       - '03-app-dotnet/**'
       - '.github/workflows/workflow-dotnet-build-new.yml'
+      - '.github/actions/dotnet-build-action/action.yml'
 
 jobs:
   build:

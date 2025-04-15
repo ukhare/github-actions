@@ -47,7 +47,7 @@ runs:
           --configuration "${{ inputs.build-configuration }}" \
           --no-restore \
           -o "${output_dir}" \
-          --verbosity diagnostic" \
+          --verbosity diagnostic \
           | tee "${log_file}"
 
     - name: Annotate warnings and errors
