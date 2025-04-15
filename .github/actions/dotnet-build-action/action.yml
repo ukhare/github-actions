@@ -20,8 +20,8 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
+    #- name: Checkout source code
+    #  uses: actions/checkout@v4
 
     - name: Validate project path
       shell: bash
