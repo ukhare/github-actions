@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted, amd-64]
+    runs-on: [self-hosted, medium-amd64]
 
     strategy:
       matrix:
