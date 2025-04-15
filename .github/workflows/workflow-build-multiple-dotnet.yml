@@ -31,8 +31,10 @@ jobs:
             is-test: true
           - project-name: my-app-dotnet-01
             app-dir: my-app-dotnet-01
+            is-test: false
           - project-name: my-app-dotnet-02
             app-dir: my-app-dotnet-02
+            is-test: false
 
     steps:
       - name: Checkout Code
