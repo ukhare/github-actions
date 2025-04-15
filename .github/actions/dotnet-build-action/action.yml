@@ -23,6 +23,14 @@ runs:
     - name: Checkout source code
       uses: actions/checkout@v4
 
+    - name: Validate project path
+      shell: bash
+      run: |
+        if [ ! -f "${{ inputs.app-dir }}" ]; then
+          echo "::error title=Missing Project File::The project file '${{ inputs.app-dir }}' does not exist."
+          exit 1
+        fi
+
     - name: Restore NuGet packages
       shell: bash
       run: |
