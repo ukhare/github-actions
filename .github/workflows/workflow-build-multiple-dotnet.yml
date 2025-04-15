@@ -3,7 +3,7 @@ name: Build Multiple .NET Projects
 on:
   push:
     branches:
-      - "main"
+      - "master"
       - "release"
   
   pull_request:
@@ -25,16 +25,12 @@ jobs:
         project:
           - project-name: test-app-dotnet-01
             app-dir: test-projects/test-app-dotnet-01
-            is-test: true
           - project-name: test-app-dotnet-02
-            app-dir: test-projects/test-app-dotnet-02
-            is-test: true
-          - project-name: my-app-dotnet-01
-            app-dir: my-app-dotnet-01
-            is-test: false
-          - project-name: my-app-dotnet-02
-            app-dir: my-app-dotnet-02
-            is-test: false
+            app-dir: test-projects/my-app-dotnet-02
+          #- project-name: my-app-dotnet-01
+          #  app-dir: my-app-dotnet-01
+          #- project-name: my-app-dotnet-02
+          #  app-dir: my-app-dotnet-02
 
     steps:
       - name: Checkout Code
@@ -46,10 +42,15 @@ jobs:
           dotnet-version: ${{ matrix.dotnet-version }}
 
       - name: Create .NET Project - ${{ matrix.project.project-name }}
-        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
         shell: bash
         run: |
           dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
+
+      - name: Skip Test Project - ${{ matrix.project.project-name }}
+        shell: bash
+        run: |
+          echo "Skipping test project ${{ matrix.project.project-name }} since run_test is not enabled"
+          exit 0
 
       - name: Build ${{ matrix.project.project-name }}
         uses: ./.github/actions/dotnet-build-action
