@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       run_build:
-        description: 'Run the test for dotnet-build-action'
+        description: 'Run the test for an existing dotnet project in repo'
         required: true
         default: 'false'
 
@@ -31,6 +31,14 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Generate global.json to lock .NET SDK version
+        run: |
+          echo '{
+            "sdk": {
+              "version": "7.0.410"
+            }
+          }' > global.json
 
       - name: Setup .NET ${{ matrix.dotnet-version }}
         uses: actions/setup-dotnet@v4
