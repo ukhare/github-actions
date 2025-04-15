@@ -31,7 +31,7 @@ runs:
     - name: Build project
       shell: bash
       run: |
-        dotnet build "${{ inputs.app-dir }}" --configuration "${{ inputs.build-configuration }}" --no-restore -o ./dotnet_build_output -fl -flp:logfile="${{ inputs.project-name }}/build.log;verbosity=diagnostic"
+        dotnet build "${{ inputs.app-dir }}" --configuration "${{ inputs.build-configuration }}" --no-restore -o ./dotnet_build_output-${{ inputs.project-name }} -fl -flp:logfile="${{ inputs.project-name }}/build.log;verbosity=diagnostic"
     
     - name: Annotate Build Logs
       shell: bash
@@ -44,32 +44,10 @@ runs:
             print "::error title=build-${{ inputs.project-name }}-build::" $0
         }
         ' "${{ inputs.project-name }}/build.log"
-    
-    
-    - name: Prepare build artifact for sharing with other CI jobs
-      shell: bash
-      run: |
-        "mkdir -p ./build_objects_artifact/${{ inputs.project-name }}/build-artifact-${{ inputs.project-name }}"
-        "cp ${{ inputs.project-name }}/build-artifact-${{ inputs.project-name }}/api.json ./build_objects_artifact/${{ inputs.project-name }}/api.json
-      
-      
-    - name: Prepare build artifact for sharing with other CI jobs
-      shell: bash
-      run: |
-        mkdir -p ./build_objects_artifact/${{ inputs.app-dir }}
-        cp ${{ inputs.app-dir }}/api.json ./build_objects_artifact/${{ inputs.app-dir }}/api.json || true
-      
+                
     - name: Upload artifacts to GitHub
       uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
       with:
         if-no-files-found: ignore
         name: build-objects-${{ inputs.project-name }}
-        path: ./build_objects_artifact
-      
-    - name: Upload build artifacts to GitHub
-      if: ${{ inputs.upload_build == 'true' }}
-      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
-      with:
-        if-no-files-found: ignore
-        name: build-artifacts-${{ inputs.project-name }}
-        path: ./dotnet_build_output
+        path: ./dotnet_build_output-${{ inputs.project-name }}
