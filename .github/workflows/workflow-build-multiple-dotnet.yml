@@ -2,67 +2,67 @@ name: Build Multiple .NET Projects
 
 on:
   push:
-    branches:
-      - "main"
-      - "release"
-  
+    branches: [ "master", "release" ]
+
   pull_request:
-  
+
   workflow_dispatch:
     inputs:
-        run_test:
-          description: 'Run the test for dotnet-build-action'
-          required: true
-          default: 'false'
+      run_test:
+        description: 'Run the test for dotnet-build-action'
+        required: true
+        default: 'false'
+
 jobs:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set matrix based on input
+        id: set-matrix
+        run: |
+          run_test="${{ github.event.inputs.run_test == 'true' }}"
+          
+          if [[ "$run_test" == "true" ]]; then
+            matrix='[
+              {"project-name":"test-app-dotnet-01", "app-dir":"test-projects/test-app-dotnet-01"},
+              {"project-name":"test-app-dotnet-02", "app-dir":"test-projects/test-app-dotnet-02"},
+            ]'
+          else
+            matrix='[
+              {"project-name":"myapp-app-dotnet-01", "app-dir":"test-projects/my-app-dotnet-01"},
+              {"project-name":"my-app-dotnet-02", "app-dir":"test-projects/my-app-dotnet-02"},
+            ]'
+          fi
+
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
   build:
+    needs: prepare-matrix
     runs-on: [self-hosted, medium-amd64]
-
     strategy:
       matrix:
-        dotnet-version: [ '7.0.x' ]
-        project:
-          - project-name: test-app-dotnet-01
-            app-dir: test-projects/test-app-dotnet-01
-            is-test: true
-          - project-name: test-app-dotnet-02
-            app-dir: test-projects/test-app-dotnet-02
-            is-test: true
-          - project-name: my-app-dotnet-01
-            app-dir: my-app-dotnet-01
-          - project-name: my-app-dotnet-02
-            app-dir: my-app-dotnet-02
+        include: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
 
     steps:
       - name: Checkout Code
-        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
         uses: actions/checkout@v4
 
-      - name: Setup .NET ${{ matrix.dotnet-version }}
-        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ matrix.dotnet-version }}
+          dotnet-version: '7.0.x'
 
-      - name: Create .NET Project - ${{ matrix.project.project-name }}
-        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
+      - name: Create .NET Project - ${{ matrix.project-name }}
         shell: bash
         run: |
-          dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
+          dotnet new console -n "${{ matrix.project-name }}" -o "${{ matrix.app-dir }}"
 
-      - name: Skip Test Project - ${{ matrix.project.project-name }}
-        if: ${{ matrix.project.is-test == true && !(github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
-        shell: bash
-        run: |
-          echo "Skipping test project ${{ matrix.project.project-name }} since run_test is not enabled"
-          exit 0
-
-      - name: Build ${{ matrix.project.project-name }}
-        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
+      - name: Build ${{ matrix.project-name }}
         uses: ./.github/actions/dotnet-build-action
         with:
-          project-name: ${{ matrix.project.project-name }}
-          app-dir: ${{ matrix.project.app-dir }}/${{ matrix.project.project-name }}.csproj
+          project-name: ${{ matrix.project-name }}
+          app-dir: ${{ matrix.app-dir }}/${{ matrix.project-name }}.csproj
           build-configuration: Release
           upload_build: true
