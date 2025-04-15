@@ -1,53 +1,63 @@
-name: "Build .NET Project"
-description: "Build a .NET project."
+name: "Building .NET Project"
+description: "Restores, builds, and optionally uploads a .NET project."
 
 inputs:
   project-name:
     description: "Name of the .NET project."
     required: true
   app-dir:
-    description: "Directory containing the project csproj file."
+    description: "Path to the .csproj file."
     required: true
   build-configuration:
     description: "Build configuration (e.g., Release, Debug)."
     required: false
     default: "Release"
   upload_build:
-    description: "Set to true to upload the build artifacts"
+    description: "Set to true to upload the build artifacts."
     required: false
     default: "false"
 
 runs:
   using: "composite"
   steps:
-    - name: Checkout code
+    - name: 📥 Checkout source code
       uses: actions/checkout@v4
 
-    - name: Restore dependencies
+    - name: 🔧 Restore NuGet packages
       shell: bash
       run: |
         dotnet restore "${{ inputs.app-dir }}"
 
-    - name: Build project
+    - name: 🛠️ Build .NET project
       shell: bash
       run: |
-        dotnet build "${{ inputs.app-dir }}" --configuration "${{ inputs.build-configuration }}" --no-restore -o ./dotnet_build_output-${{ inputs.project-name }} -fl -flp:logfile="${{ inputs.project-name }}/build.log;verbosity=diagnostic"
-    
-    - name: Annotate Build Logs
+        output_dir="./dotnet_build_output-${{ inputs.project-name }}"
+        log_file="${{ inputs.project-name }}/build.log"
+
+        mkdir -p "${{ inputs.project-name }}"
+        dotnet build "${{ inputs.app-dir }}" \
+          --configuration "${{ inputs.build-configuration }}" \
+          --no-restore \
+          -o "${output_dir}" \
+          -fl -flp:logfile="${log_file};verbosity=diagnostic"
+
+    - name: 📝 Annotate warnings and errors
       shell: bash
       run: |
+        log_file="${{ inputs.project-name }}/build.log"
         awk '
         /: warning [A-Z0-9]+:/ {
-            print "::warning title=build-${{ inputs.project-name }}-build::" $0
+            print "::warning title=Build Warning::" $0
         }
         /: error [A-Z0-9]+:/ {
-            print "::error title=build-${{ inputs.project-name }}-build::" $0
+            print "::error title=Build Error::" $0
         }
-        ' "${{ inputs.project-name }}/build.log"
-                
-    - name: Upload artifacts to GitHub
-      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        ' "${log_file}"
+
+    - name: 📦 Upload build artifacts
+      if: ${{ inputs.upload_build == 'true' }}
+      uses: actions/upload-artifact@v4
       with:
-        if-no-files-found: ignore
-        name: build-objects-${{ inputs.project-name }}
+        name: build-artifacts-${{ inputs.project-name }}
         path: ./dotnet_build_output-${{ inputs.project-name }}
+        if-no-files-found: ignore
