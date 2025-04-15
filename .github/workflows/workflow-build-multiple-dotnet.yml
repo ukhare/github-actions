@@ -2,7 +2,7 @@ name: Build Multiple .NET Projects
 
 on:
   push:
-    branches: [ "master", "release" ]
+    branches: [ "main", "release" ]
 
   pull_request:
 
