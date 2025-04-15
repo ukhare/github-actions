@@ -38,13 +38,10 @@ jobs:
         with:
           dotnet-version: ${{ matrix.dotnet-version }}
 
-      - name: Create Multiple .NET Projects
+      - name: Create .NET Project - ${{ matrix.project.project-name }}
         shell: bash
         run: |
-          mkdir -p temp-projects
-          dotnet new console -n test-app-1 -o temp-projects/my-app-dotnet-01
-          dotnet new console -n test-app-2 -o temp-projects/my-app-dotnet-02
-
+          dotnet new console -o "${{ matrix.project.app-dir }}"
 
       - name: Build ${{ matrix.project.project-name }}
         uses: ./.github/actions/dotnet-build-action
