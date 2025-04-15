@@ -18,8 +18,8 @@ jobs:
         project:
           - project-name: 03-app-dotnet
             app-dir: 03-app-dotnet/app-dotnet.csproj
-          - project-name: 03-app-dotnet
-            app-dir: 03-app-dotnet/app-dotnet.csproj
+          - project-name: 04-app-dotnet
+            app-dir: 04-app-dotnet/app-dotnet.csproj
 
     steps:
       - name: Checkout Code
