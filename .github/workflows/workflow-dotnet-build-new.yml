@@ -30,4 +30,4 @@ jobs:
           project-name: 03-app-dotnet
           app-dir: 03-app-dotnet/app-dotnet.csproj
           build-configuration: Release
-          upload_build: false
+          upload_build: true
