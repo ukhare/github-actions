@@ -18,36 +18,44 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      should-run: ${{ steps.set-matrix.outputs.should-run }}
     steps:
       - name: Set matrix based on event
         id: set-matrix
         run: |
           echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
           
+          run_test="false"
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
             run_test=$(jq -r '.inputs.run_test' "$GITHUB_EVENT_PATH")
-            if [[ "$run_test" == "true" ]]; then
-              matrix='[
-                {"project-name":"test-app-dotnet-01", "app-dir":"test-projects/test-app-dotnet-01"},
-                {"project-name":"test-app-dotnet-02", "app-dir":"test-projects/my-app-dotnet-02"}
-              ]'
-            else
-              matrix='[]'
-            fi
-          elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+          fi
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "$run_test" == "true" ]]; then
+            echo "Preparing matrix for test projects"
+            matrix='[
+              {"project-name":"test-app-dotnet-01", "app-dir":"test-projects/test-app-dotnet-01"},
+              {"project-name":"test-app-dotnet-02", "app-dir":"test-projects/test-app-dotnet-02"}
+            ]'
+            should_run="true"
+          elif [[ "$GITHUB_EVENT_NAME" == "push" || "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            echo "Preparing matrix for non-test projects"
             matrix='[
               {"project-name":"my-app-dotnet-01", "app-dir":"my-app-dotnet-01"},
               {"project-name":"my-app-dotnet-02", "app-dir":"my-app-dotnet-02"}
             ]'
+            should_run="true"
           else
+            echo "Skipping build - no valid trigger"
             matrix='[]'
+            should_run="false"
           fi
 
           echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
+          echo "should-run=$should_run" >> "$GITHUB_OUTPUT"
 
   build:
     needs: prepare-matrix
-    if: ${{ fromJson(needs.prepare-matrix.outputs.matrix) != '[]' }}
+    if: ${{ needs.prepare-matrix.outputs.should-run == 'true' }}
     runs-on: [self-hosted, medium-amd64]
     strategy:
       matrix:
