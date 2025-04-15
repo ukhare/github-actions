@@ -1,0 +1,76 @@
+name: "Build .NET Project"
+description: "Build a .NET project."
+
+inputs:
+  project-name:
+    description: "Name of the .NET project."
+    required: true
+  app-dir:
+    description: "Directory containing the project csproj file."
+    required: true
+  build-configuration:
+    description: "Build configuration (e.g., Release, Debug)."
+    required: false
+    default: "Release"
+  upload_build:
+    description: "Set to true to upload the build artifacts"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Restore dependencies
+      shell: bash
+      run: |
+        dotnet restore "${{ inputs.app-dir }}"
+
+    - name: Build project
+      shell: bash
+      run: |
+        dotnet build "${{ inputs.app-dir }}" --configuration "${{ inputs.build-configuration }}" --no-restore -o ./dotnet_build_output -fl -flp:logfile="${{ inputs.app-dir }}/build.log;verbosity=diagnostic"
+    
+    - name: Annotate Build Logs
+      shell: bash
+      run: |
+        awk '
+        /: warning [A-Z0-9]+:/ {
+            print "::warning title=build-${{ inputs.project-name }}-build::" $0
+        }
+        /: error [A-Z0-9]+:/ {
+            print "::error title=build-${{ inputs.project-name }}-build::" $0
+        }
+        ' "${{ inputs.app-dir }}/build.log"
+    
+    
+    - name: Prepare build artifact for sharing with other CI jobs
+      shell: bash
+      run: |
+        mkdir -p ./build_objects_artifact/${{ inputs.app-dir }}
+        cp ${{ inputs.app-dir }}/api.json ./build_objects_artifact/${{ inputs.app-dir }}/api.json || true
+      
+      
+    - name: Prepare build artifact for sharing with other CI jobs
+      if: ${{ inputs.docker-build == 'true' }}
+      shell: bash
+      run: |
+        mkdir -p ./build_objects_artifact/${{ inputs.app-dir }}
+        cp ${{ inputs.app-dir }}/api.json ./build_objects_artifact/${{ inputs.app-dir }}/api.json || true
+      
+    - name: Upload artifacts to GitHub
+      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+      with:
+        if-no-files-found: ignore
+        name: build-objects-${{ inputs.project-name }}
+        path: ./build_objects_artifact
+      
+    - name: Upload build artifacts to GitHub
+      if: ${{ inputs.upload_build == 'true' }}
+      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+      with:
+        if-no-files-found: ignore
+        name: build-artifacts-${{ inputs.project-name }}
+        path: ./dotnet_build_output
