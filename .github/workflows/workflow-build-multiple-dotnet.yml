@@ -25,9 +25,9 @@ jobs:
         dotnet-version: [ '7.0.x' ]
         project:
           - project-name: myapp-app-dotnet-01
-            app-dir: temp-projects/my-app-dotnet-01/my-app-dotnet-01.csproj
+            app-dir: temp-projects/my-app-dotnet-01
           - project-name: my-app-dotnet-02
-            app-dir: temp-projects/my-app-dotnet-02/my-app-dotnet-02.csproj
+            app-dir: temp-projects/my-app-dotnet-02
 
     steps:
       - name: Checkout Code
@@ -41,12 +41,12 @@ jobs:
       - name: Create .NET Project - ${{ matrix.project.project-name }}
         shell: bash
         run: |
-          dotnet new console -o "${{ matrix.project.app-dir }}"
+          dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
 
       - name: Build ${{ matrix.project.project-name }}
         uses: ./.github/actions/dotnet-build-action
         with:
           project-name: ${{ matrix.project.project-name }}
-          app-dir: ${{ matrix.project.app-dir }}
+          app-dir: ${{ matrix.project.app-dir }}/${{ matrix.project.project-name }}.csproj
           build-configuration: Release
           upload_build: true
