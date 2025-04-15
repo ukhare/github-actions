@@ -17,6 +17,7 @@ on:
 
 jobs:
   build:
+    name: build-${{ matrix.project.project-name }}
     runs-on: [self-hosted, medium-amd64]
 
     strategy:
