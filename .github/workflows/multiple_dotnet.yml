@@ -1,4 +1,4 @@
-name: Build Multiple .NET Projects
+name: Building Multiple .NET Projects (includes conditional test)
 
 on:
   push:
@@ -24,9 +24,9 @@ jobs:
         dotnet-version: [ '7.0.x' ]
         project:
           - project-name: my-app-dotnet-01
-            app-dir: temp-projects/my-app-dotnet-01
+            app-dir: my-app-dotnet-01
           - project-name: my-app-dotnet-02
-            app-dir: temp-projects/my-app-dotnet-02
+            app-dir: my-app-dotnet-02
 
     steps:
       - name: Checkout Code
