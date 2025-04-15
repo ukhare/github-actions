@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "oAX8cLDo697ZYwT7c6Rv8pTbJ2Zjr8KbZlYA+tpiGgsC+E6MDMSDoz7XRNWtry6bCZigxiD1CBgfvAwxs1AvCg==",
+  "success": true,
+  "projectFilePath": "/home/ukhare/github_actions_tutorial/github-actions/03-app-dotnet/app-dotnet.csproj",
+  "expectedPackageFiles": [
+    "/home/ukhare/.nuget/packages/microsoft.netcore.app.ref/6.0.31/microsoft.netcore.app.ref.6.0.31.nupkg.sha512",
+    "/home/ukhare/.nuget/packages/microsoft.aspnetcore.app.ref/6.0.31/microsoft.aspnetcore.app.ref.6.0.31.nupkg.sha512",
+    "/home/ukhare/.nuget/packages/microsoft.netcore.app.host.linux-x64/6.0.31/microsoft.netcore.app.host.linux-x64.6.0.31.nupkg.sha512"
+  ],
+  "logs": []
+}

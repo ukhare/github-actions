@@ -15,24 +15,38 @@ This GitHub Action restores, builds, and optionally uploads a .NET project using
 ## Usage
 
 ```yaml
-name: Build .NET Project
+name: Build Multiple .NET Projects
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - "main"
+      - "release"
+  
   pull_request:
-    branches: [ main ]
+  
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project:
+          - project-name: 03-app-dotnet
+            app-dir: 03-app-dotnet/app-dotnet.csproj
+          - project-name: 03-app-dotnet
+            app-dir: 03-app-dotnet/app-dotnet.csproj
 
     steps:
-      - name: Use .NET Build Action
-        uses: your-username/your-repo-name@main
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.project.project-name }}
+        uses: ./.github/actions/dotnet-build-action
         with:
-          project-name: MyApp
-          app-dir: src/MyApp/MyApp.csproj
+          project-name: ${{ matrix.project.project-name }}
+          app-dir: ${{ matrix.project.app-dir }}
           build-configuration: Release
           upload_build: true
 ```
