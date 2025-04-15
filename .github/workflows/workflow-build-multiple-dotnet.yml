@@ -38,11 +38,9 @@ jobs:
 
     steps:
       - name: Checkout Code
-        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
         uses: actions/checkout@v4
 
       - name: Setup .NET ${{ matrix.dotnet-version }}
-        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ matrix.dotnet-version }}
@@ -53,15 +51,7 @@ jobs:
         run: |
           dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
 
-      - name: Skip Test Project - ${{ matrix.project.project-name }}
-        if: ${{ matrix.project.is-test == true && !(github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
-        shell: bash
-        run: |
-          echo "Skipping test project ${{ matrix.project.project-name }} since run_test is not enabled"
-          exit 0
-
       - name: Build ${{ matrix.project.project-name }}
-        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
         uses: ./.github/actions/dotnet-build-action
         with:
           project-name: ${{ matrix.project.project-name }}
