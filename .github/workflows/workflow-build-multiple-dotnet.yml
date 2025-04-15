@@ -9,7 +9,7 @@ on:
       run_test:
         description: 'Run the test for dotnet-build-action'
         required: true
-        default: 'false'
+        default: 'true'
 
 jobs:
   prepare-matrix:
