@@ -29,8 +29,8 @@ jobs:
 
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "$run_test" == "true" ]]; then
             matrix='[
-              {"project-name":"test-app-dotnet-01", "app-dir":"test-projects/test-app-dotnet-01"},
-              {"project-name":"test-app-dotnet-02", "app-dir":"test-projects/test-app-dotnet-02"}
+              {"project-name":"my-app-dotnet-01", "app-dir":"test-projects/test-app-dotnet-01"},
+              {"project-name":"my-app-dotnet-02", "app-dir":"test-projects/test-app-dotnet-02"}
             ]'
           elif [[ "$GITHUB_EVENT_NAME" == "push" || "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             matrix='[
