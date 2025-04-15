@@ -19,15 +19,24 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Set matrix based on input
+      - name: Set matrix based on event type
         id: set-matrix
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.run_test }}" == "true" ]]; then
+          echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
+
+          run_test="false"
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            run_test=$(jq -r '.inputs.run_test' "$GITHUB_EVENT_PATH")
+          fi
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "$run_test" == "true" ]]; then
+            echo "Preparing matrix for test projects"
             matrix='[
               {"project-name":"test-app-dotnet-01", "app-dir":"test-projects/test-app-dotnet-01"},
               {"project-name":"test-app-dotnet-02", "app-dir":"test-projects/test-app-dotnet-02"}
             ]'
           else
+            echo "Preparing matrix for non-test projects"
             matrix='[
               {"project-name":"myapp-app-dotnet-01", "app-dir":"projects/myapp-app-dotnet-01"},
               {"project-name":"my-app-dotnet-02", "app-dir":"projects/my-app-dotnet-02"}
