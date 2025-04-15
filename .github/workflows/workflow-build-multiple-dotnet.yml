@@ -24,10 +24,13 @@ jobs:
         run: |
           echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
 
-          run_test="false"
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
-            run_test=$(jq -r '.inputs.run_test' "$GITHUB_EVENT_PATH")
+            run_test=$(jq -r '.inputs.run_test // "false"' "$GITHUB_EVENT_PATH")
+          else
+            run_test="false"
           fi
+
+          echo "Resolved run_test: $run_test"
 
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "$run_test" == "true" ]]; then
             echo "Preparing matrix for test projects"
