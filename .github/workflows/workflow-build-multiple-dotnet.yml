@@ -17,7 +17,6 @@ on:
 jobs:
 
   build:
-    if: github.event.inputs.run_test == 'true'
     runs-on: [self-hosted, medium-amd64]
 
     strategy:
