@@ -47,10 +47,10 @@ jobs:
       matrix:
         dotnet-version: [ '7.0.x' ]
         project:
-          - project-name: 03-app-dotnet
-            app-dir: 03-app-dotnet/app-dotnet.csproj
-          - project-name: 04-app-dotnet
-            app-dir: 04-app-dotnet/app-dotnet.csproj
+          - project-name: my-app-dotnet-1
+            app-dir: my-app-dotnet-1/app-dotnet.csproj
+          - project-name: my-app-dotnet-2
+            app-dir: my-app-dotnet-2/app-dotnet.csproj
 
     steps:
       - name: Checkout Code
@@ -79,9 +79,9 @@ jobs:
 └── actions/
     └── dotnet-build-action/
         └── action.yml
-03-app-dotnet/
+my-app-dotnet-1/
   └── app-dotnet.csproj
-04-app-dotnet/
+my-app-dotnet-2/
   └── app-dotnet.csproj
 ```
 
