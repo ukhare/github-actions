@@ -1,4 +1,4 @@
-name: Building Multiple .NET Projects
+name: Build Multiple .NET Projects
 
 on:
   push:
@@ -10,21 +10,20 @@ on:
   
   workflow_dispatch:
     inputs:
-        run_test:
-          description: 'Run the test for dotnet-build-action'
-          required: true
-          default: 'false'
-jobs:
+      run_test:
+        description: 'Run the test for dotnet-build-action'
+        required: true
+        default: 'false'
 
+jobs:
   build:
-    if: github.event.inputs.run_test == 'false'
     runs-on: [self-hosted, medium-amd64]
 
     strategy:
       matrix:
         dotnet-version: [ '7.0.x' ]
         project:
-          - project-name: myapp-app-dotnet-01
+          - project-name: my-app-dotnet-01
             app-dir: temp-projects/my-app-dotnet-01
           - project-name: my-app-dotnet-02
             app-dir: temp-projects/my-app-dotnet-02
@@ -39,7 +38,7 @@ jobs:
           dotnet-version: ${{ matrix.dotnet-version }}
 
       - name: Create .NET Project - ${{ matrix.project.project-name }}
-        if: github.event.inputs.run_test == 'true'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true'
         shell: bash
         run: |
           dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
