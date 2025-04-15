@@ -24,21 +24,23 @@ jobs:
         dotnet-version: [ '7.0.x' ]
         project:
           - project-name: myapp-app-dotnet-01
-            app-dir: temp-projects/my-app-dotnet-01
+            app-dir: test-projects/my-app-dotnet-01
             is-test: true
           - project-name: my-app-dotnet-02
-            app-dir: temp-projects/my-app-dotnet-02
+            app-dir: test-projects/my-app-dotnet-02
             is-test: true
-          - project-name: 03-app-dotnet
-            app-dir: 03-app-dotnet
-          - project-name: 04-app-dotnet
-            app-dir: 04-app-dotnet
+          - project-name: my-app-dotnet-01
+            app-dir: my-app-dotnet-01
+          - project-name: my-app-dotnet-02
+            app-dir: my-app-dotnet-02
 
     steps:
       - name: Checkout Code
+        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
         uses: actions/checkout@v4
 
       - name: Setup .NET ${{ matrix.dotnet-version }}
+        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ matrix.dotnet-version }}
