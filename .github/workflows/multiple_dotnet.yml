@@ -10,10 +10,10 @@ on:
   
   workflow_dispatch:
     inputs:
-      run_test:
+      run_build:
         description: 'Run the test for dotnet-build-action'
         required: true
-        default: 'true'
+        default: 'false'
 
 jobs:
   build:
@@ -38,7 +38,7 @@ jobs:
           dotnet-version: ${{ matrix.dotnet-version }}
 
       - name: Create .NET Project - ${{ matrix.project.project-name }}
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true'
+        if: github.event_name != 'workflow_dispatch' && github.event.inputs.run_build == 'false'
         shell: bash
         run: |
           rm -rf "${{ matrix.project.app-dir }}"
