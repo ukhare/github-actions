@@ -9,19 +9,25 @@ on:
   pull_request:
   
   workflow_dispatch:
-
+    inputs:
+        run_test:
+          description: 'Run the test for dotnet-build-action'
+          required: true
+          default: 'false'
 jobs:
+
   build:
+    if: github.event.inputs.run_test == 'true'
     runs-on: [self-hosted, medium-amd64]
 
     strategy:
       matrix:
         dotnet-version: [ '7.0.x' ]
         project:
-          - project-name: 03-app-dotnet
-            app-dir: 03-app-dotnet/app-dotnet.csproj
-          - project-name: 04-app-dotnet
-            app-dir: 04-app-dotnet/app-dotnet.csproj
+          - project-name: myapp-app-dotnet-01
+            app-dir: temp-projects/my-app-dotnet-01/my-app-dotnet-01.csproj
+          - project-name: my-app-dotnet-02
+            app-dir: temp-projects/my-app-dotnet-02/my-app-dotnet-02.csproj
 
     steps:
       - name: Checkout Code
@@ -31,6 +37,14 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ matrix.dotnet-version }}
+
+      - name: Create Multiple .NET Projects
+        shell: bash
+        run: |
+          mkdir -p temp-projects
+          dotnet new console -n test-app-1 -o temp-projects/my-app-dotnet-01
+          dotnet new console -n test-app-2 -o temp-projects/my-app-dotnet-02
+
 
       - name: Build ${{ matrix.project.project-name }}
         uses: ./.github/actions/dotnet-build-action
