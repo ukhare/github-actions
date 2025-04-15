@@ -1,0 +1,29 @@
+name: Build Project from github-actions-course
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout github-actions-course repo
+        uses: actions/checkout@v4
+        with:
+          repository: ukhare/github-actions-course
+          path: github-actions-course
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Run Build Action on Checked-out Repo
+        uses: ./.github/actions/dotnet-build-action
+        with:
+          project-name: app-dotnet
+          app-dir: github-actions-course/03-app-dotnet/app-dotnet.csproj
+          build-configuration: Release
+          upload_build: true
