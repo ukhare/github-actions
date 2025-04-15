@@ -20,15 +20,15 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: 📥 Checkout source code
+    - name: Checkout source code
       uses: actions/checkout@v4
 
-    - name: 🔧 Restore NuGet packages
+    - name: Restore NuGet packages
       shell: bash
       run: |
         dotnet restore "${{ inputs.app-dir }}"
 
-    - name: 🛠️ Build .NET project
+    - name: Build .NET project
       shell: bash
       run: |
         output_dir="./dotnet_build_output-${{ inputs.project-name }}"
@@ -39,9 +39,10 @@ runs:
           --configuration "${{ inputs.build-configuration }}" \
           --no-restore \
           -o "${output_dir}" \
-          -fl -flp:logfile="${log_file};verbosity=diagnostic"
+          --verbosity diagnostic" \
+          | tee "${log_file}"
 
-    - name: 📝 Annotate warnings and errors
+    - name: Annotate warnings and errors
       shell: bash
       run: |
         log_file="${{ inputs.project-name }}/build.log"
@@ -54,7 +55,7 @@ runs:
         }
         ' "${log_file}"
 
-    - name: 📦 Upload build artifacts
+    - name: Upload build artifacts
       if: ${{ inputs.upload_build == 'true' }}
       uses: actions/upload-artifact@v4
       with:
