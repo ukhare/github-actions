@@ -57,6 +57,7 @@ jobs:
           exit 0
 
       - name: Build ${{ matrix.project.project-name }}
+        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
         uses: ./.github/actions/dotnet-build-action
         with:
           project-name: ${{ matrix.project.project-name }}
