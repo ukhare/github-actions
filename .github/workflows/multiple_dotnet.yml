@@ -38,7 +38,7 @@ jobs:
           dotnet-version: ${{ matrix.dotnet-version }}
 
       - name: Create .NET Project - ${{ matrix.project.project-name }}
-        if: github.event_name != 'workflow_dispatch' && github.event.inputs.run_build == 'false'
+        if: github.event_name != 'workflow_dispatch'
         shell: bash
         run: |
           rm -rf "${{ matrix.project.app-dir }}"
