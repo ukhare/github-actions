@@ -1,7 +1,10 @@
-
 # Build .NET Project - GitHub Action
 
-This GitHub Action restores, builds, and optionally uploads a .NET project using the dotnet CLI. It's designed for monorepos or multi-project repositories and supports matrix builds across different .NET SDK versions and project configurations.
+This GitHub Action restores, builds, and optionally uploads a .NET project using the dotnet CLI. It's designed to work with monorepos or repositories that may or may not have pre-existing .NET projects.
+
+It also supports **creating test projects dynamically** when no project exists (e.g., in actions testing or validation scenarios), using a matrix strategy across multiple SDK versions and project configurations.
+
+---
 
 ## Inputs
 
@@ -12,45 +15,60 @@ This GitHub Action restores, builds, and optionally uploads a .NET project using
 | build-configuration | Build configuration (Release, Debug, etc.).           | No       | Release  |
 | upload_build        | Whether to upload the build output (true or false).   | No       | false    |
 
+---
+
 ## What This Action Does
 
 1. Checks out the source code
-2. Validates that the .csproj file exists
-3. Restores NuGet packages with dotnet restore
-4. Builds the project using dotnet build with diagnostic logging
-5. Parses build logs and annotates warnings/errors
-6. Optionally uploads the build artifacts
+2. Validates the `.csproj` path
+3. Restores NuGet packages using `dotnet restore`
+4. Builds with `dotnet build` and `diagnostic` verbosity
+5. Parses logs to annotate warnings/errors
+6. Optionally uploads build artifacts for the project
+
+---
 
 ## Output Artifacts
 
-If upload_build: true, an artifact folder named dotnet_build_output-<project-name> is created and uploaded. This includes all compiled files for that project.
+If `upload_build: true`, an artifact folder named `dotnet_build_output-<project-name>` is created and uploaded.
 
-## Example Workflow: Matrix Build for Multiple .NET Projects
+---
+
+## Example Workflow
+
+### Default Mode (No existing .NET project)
+
+When triggered by `push` or `pull_request`, this setup dynamically **creates** a testable console project using `dotnet new console` and builds it:
 
 ```yaml
-name: Build Multiple .NET Projects
+name: Building Multiple .NET Projects (includes conditional test)
 
 on:
   push:
-    branches:
-      - "main"
-      - "release"
+    branches: [ "main", "release" ]
 
   pull_request:
 
   workflow_dispatch:
+    inputs:
+      run_build:
+        description: 'Run the test for an existing dotnet project in repo'
+        required: true
+        default: 'false'
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: build-${{ matrix.project.project-name }}
+    runs-on: [self-hosted, medium-amd64]
+
     strategy:
       matrix:
-        dotnet-version: [ '7.0.x' ]
+        dotnet-version: ['7.0.x']
         project:
-          - project-name: my-app-dotnet-1
-            app-dir: my-app-dotnet-1/app-dotnet.csproj
-          - project-name: my-app-dotnet-2
-            app-dir: my-app-dotnet-2/app-dotnet.csproj
+          - project-name: my-app-dotnet-01
+            app-dir: my-app-dotnet-01
+          - project-name: my-app-dotnet-02
+            app-dir: my-app-dotnet-02
 
     steps:
       - name: Checkout Code
@@ -61,29 +79,47 @@ jobs:
         with:
           dotnet-version: ${{ matrix.dotnet-version }}
 
+      - name: Create .NET Project - ${{ matrix.project.project-name }}
+        if: github.event_name != 'workflow_dispatch'
+        shell: bash
+        run: |
+          rm -rf "${{ matrix.project.app-dir }}"
+          dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
+
       - name: Build ${{ matrix.project.project-name }}
         uses: ./.github/actions/dotnet-build-action
         with:
           project-name: ${{ matrix.project.project-name }}
-          app-dir: ${{ matrix.project.app-dir }}
+          app-dir: ${{ matrix.project.app-dir }}/${{ matrix.project.project-name }}.csproj
           build-configuration: Release
           upload_build: true
 ```
+
+---
 
 ## Directory Structure Example
 
 ```
 .github/
 ├── workflows/
-│   └── build-multiple-dotnet.yml
+│   └── build-dotnet.yml
 └── actions/
     └── dotnet-build-action/
         └── action.yml
-my-app-dotnet-1/
-  └── app-dotnet.csproj
-my-app-dotnet-2/
-  └── app-dotnet.csproj
 ```
+
+- With normal push, pull_request new projects will be created and build as defined in matrix.
+- If any project exisst in repository then it can be tested with workflow_dispatch run_build: true
+- This workflow can also be optimized to build existing projects by switching the workflow_dispatch logic to push, pull_request 
+  - as this test workflow is created keeping in mind that no existing dotnet project already exists in 'devops-ci-workflow-shared' repository as of now.
+
+---
+
+## Notes
+
+- Test projects are created automatically unless explicitly running a build for existing projects via `workflow_dispatch`.
+- This is ideal for validating the action itself or for building real apps in your repo.
+- Action is defined locally as a composite action at `./.github/actions/dotnet-build-action`.
 
 ## References
 
@@ -94,13 +130,3 @@ my-app-dotnet-2/
 - [actions/upload-artifact](https://github.com/actions/upload-artifact)
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [.NET CLI Documentation](https://learn.microsoft.com/en-us/dotnet/core/tools/)
-
-
-
-
-
-## Notes
-
-- Ensure the relative paths (app-dir) are correct from the repo root.
-- This setup uses a composite action, referenced locally via ./.github/actions/dotnet-build-action.
-- You can version and publish this action to a public repository for reuse across multiple projects.
