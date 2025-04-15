@@ -22,21 +22,19 @@ jobs:
       - name: Set matrix based on input
         id: set-matrix
         run: |
-          run_test="${{ github.event.inputs.run_test == 'true' }}"
-          
-          if [[ "$run_test" == "true" ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.run_test }}" == "true" ]]; then
             matrix='[
               {"project-name":"test-app-dotnet-01", "app-dir":"test-projects/test-app-dotnet-01"},
-              {"project-name":"test-app-dotnet-02", "app-dir":"test-projects/test-app-dotnet-02"},
+              {"project-name":"test-app-dotnet-02", "app-dir":"test-projects/test-app-dotnet-02"}
             ]'
           else
             matrix='[
-              {"project-name":"myapp-app-dotnet-01", "app-dir":"test-projects/my-app-dotnet-01"},
-              {"project-name":"my-app-dotnet-02", "app-dir":"test-projects/my-app-dotnet-02"},
+              {"project-name":"myapp-app-dotnet-01", "app-dir":"projects/myapp-app-dotnet-01"},
+              {"project-name":"my-app-dotnet-02", "app-dir":"projects/my-app-dotnet-02"}
             ]'
           fi
 
-          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
 
   build:
     needs: prepare-matrix
