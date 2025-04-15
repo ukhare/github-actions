@@ -20,8 +20,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    #- name: Checkout source code
-    #  uses: actions/checkout@v4
 
     - name: Validate project path
       shell: bash
@@ -34,7 +32,10 @@ runs:
     - name: Restore NuGet packages
       shell: bash
       run: |
-        dotnet restore "${{ inputs.app-dir }}"
+        if ! dotnet restore "${{ inputs.app-dir }}"; then
+          echo "::error title=Restore Failed::Failed to restore NuGet packages."
+          exit 1
+        fi
 
     - name: Build .NET project
       shell: bash

@@ -26,8 +26,14 @@ jobs:
         project:
           - project-name: myapp-app-dotnet-01
             app-dir: temp-projects/my-app-dotnet-01
+            is-test: true
           - project-name: my-app-dotnet-02
             app-dir: temp-projects/my-app-dotnet-02
+            is-test: true
+          - project-name: 03-app-dotnet
+            app-dir: 03-app-dotnet
+          - project-name: 04-app-dotnet
+            app-dir: 04-app-dotnet
 
     steps:
       - name: Checkout Code
@@ -39,9 +45,17 @@ jobs:
           dotnet-version: ${{ matrix.dotnet-version }}
 
       - name: Create .NET Project - ${{ matrix.project.project-name }}
+        if: ${{ matrix.project.is-test == true && (github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
         shell: bash
         run: |
           dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
+
+      - name: Skip Test Project - ${{ matrix.project.project-name }}
+        if: ${{ matrix.project.is-test == true && !(github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true') }}
+        shell: bash
+        run: |
+          echo "Skipping test project ${{ matrix.project.project-name }} since run_test is not enabled"
+          exit 0
 
       - name: Build ${{ matrix.project.project-name }}
         uses: ./.github/actions/dotnet-build-action
