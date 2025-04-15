@@ -71,6 +71,7 @@ jobs:
           dotnet-version: '7.0.x'
 
       - name: Create .NET Project - ${{ matrix.project-name }}
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true'
         shell: bash
         run: |
           dotnet new console -n "${{ matrix.project-name }}" -o "${{ matrix.app-dir }}"
