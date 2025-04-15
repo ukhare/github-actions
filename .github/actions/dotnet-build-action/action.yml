@@ -31,7 +31,7 @@ runs:
     - name: Build project
       shell: bash
       run: |
-        dotnet build "${{ inputs.app-dir }}" --configuration "${{ inputs.build-configuration }}" --no-restore -o ./dotnet_build_output -fl -flp:logfile="${{ inputs.app-dir }}/build.log;verbosity=diagnostic"
+        dotnet build "${{ inputs.app-dir }}" --configuration "${{ inputs.build-configuration }}" --no-restore -o ./dotnet_build_output -fl -flp:logfile="${{ inputs.project-name }}/build.log;verbosity=diagnostic"
     
     - name: Annotate Build Logs
       shell: bash
@@ -43,7 +43,7 @@ runs:
         /: error [A-Z0-9]+:/ {
             print "::error title=build-${{ inputs.project-name }}-build::" $0
         }
-        ' "${{ inputs.app-dir }}/build.log"
+        ' "${{ inputs.project-name }}/build.log"
     
     
     - name: Prepare build artifact for sharing with other CI jobs
