@@ -16,7 +16,7 @@ jobs:
         with:
           repository: ukhare/github-actions-course
           path: github-actions-course
-          token: ${{ secrets.GH_TPA }}
+          token: ${{ secrets.GH_PTA }}
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
