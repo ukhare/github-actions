@@ -23,11 +23,11 @@ jobs:
       matrix:
         dotnet-version: [ '7.0.x' ]
         project:
-          - project-name: myapp-app-dotnet-01
-            app-dir: test-projects/my-app-dotnet-01
+          - project-name: test-app-dotnet-01
+            app-dir: test-projects/test-app-dotnet-01
             is-test: true
-          - project-name: my-app-dotnet-02
-            app-dir: test-projects/my-app-dotnet-02
+          - project-name: test-app-dotnet-02
+            app-dir: test-projects/test-app-dotnet-02
             is-test: true
           - project-name: my-app-dotnet-01
             app-dir: my-app-dotnet-01
