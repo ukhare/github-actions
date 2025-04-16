@@ -1,0 +1,58 @@
+name: Dynamically Build and test .NET Projects
+
+on:
+  # Run on a push to master or any release branch
+  push:
+    branches:
+      - "master"
+      - "release"
+
+  # Run against any PR
+  pull_request:
+  # Allow manual execution
+
+  workflow_dispatch:
+    inputs:
+      # if there is one or more existing dot net projects in 'devops-ci-workflow-shared' repo
+      run_build:
+        description: 'Run the test for an existing dotnet project in repo'
+        required: true
+        default: 'false'
+
+jobs:
+  build:
+    name: build-${{ matrix.project.project-name }}
+    runs-on: [self-hosted, medium-amd64]
+
+    strategy:
+      matrix:
+        dotnet-version: ['7.0.x']
+        project:
+          - project-name: my-app-dotnet-01
+            app-dir: my-app-dotnet-01
+          - project-name: my-app-dotnet-02
+            app-dir: my-app-dotnet-02
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ matrix.dotnet-version }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+
+      - name: Create .NET Project - ${{ matrix.project.project-name }}
+        if: github.event_name != 'workflow_dispatch'
+        shell: bash
+        run: |
+          rm -rf "${{ matrix.project.app-dir }}"
+          dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
+
+      - name: Build ${{ matrix.project.project-name }}
+        uses: ./.github/actions/dotnet-build-action
+        with:
+          project-name: ${{ matrix.project.project-name }}
+          app-dir: ${{ matrix.project.app-dir }}/${{ matrix.project.project-name }}.csproj
+          build-configuration: Release
+          upload_build: true
