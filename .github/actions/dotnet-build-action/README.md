@@ -130,3 +130,130 @@ jobs:
 - [actions/upload-artifact](https://github.com/actions/upload-artifact)
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [.NET CLI Documentation](https://learn.microsoft.com/en-us/dotnet/core/tools/)
+
+
+# Build Multiple .NET Projects with Shared CI Action
+
+This GitHub Actions workflow is designed for the [`fmgl-autonomy/imperium`](https://github.com/fmgl-autonomy/imperium) repository. It builds multiple .NET projects using a **shared composite action** located in the [`fmgl-autonomy/devops-ci-workflows-shared`](https://github.com/fmgl-autonomy/devops-ci-workflows-shared) repository.
+
+---
+
+## Where to Place This Workflow
+
+Place the following file in your Imperium repository at:
+
+```
+imperium/.github/workflows/build.yml
+```
+
+---
+
+## What This Workflow Does
+
+- **Triggers** on:
+  - Pushes to `main`
+  - All pull requests
+  - Manual dispatch via the GitHub UI (`workflow_dispatch`)
+  
+- **Builds multiple .NET projects** in parallel using matrix strategy.
+
+- **Uses a shared GitHub Action** to handle the .NET build process:
+  - Restores packages
+  - Builds using `dotnet build`
+  - Uploads build artifacts (if enabled)
+
+---
+
+## Workflow Definition
+
+```yaml
+# See full YAML in this repo: .github/workflows/build.yml
+
+name: Build Imperium Projects with Shared CI Action
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build-${ matrix.project.project-name }
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        dotnet-version: [ '7.0.x' ]
+        project:
+          - project-name: asset-manager
+            app-dir: Asset/AssetManager/AssetManager/AssetManager.csproj
+          - project-name: mine-model-service
+            app-dir: MineModel/MineModelService/MineModelService/MineModelService.csproj
+
+    steps:
+      - name: Checkout Code (imperium repo)
+        uses: actions/checkout@v4
+
+      - name: Checkout Shared GitHub Actions Repo (devops-ci-workflows-shared)
+        uses: actions/checkout@v4
+        with:
+          repository: fmgl-autonomy/devops-ci-workflows-shared
+          path: .github/actions/shared
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Setup .NET SDK ${{ matrix.dotnet-version }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+
+      - name: Build ${{ matrix.project.project-name }}
+        uses: ./.github/actions/shared/.github/actions/dotnet-build-action
+        with:
+          project-name: ${{ matrix.project.project-name }}
+          app-dir: ${{ matrix.project.app-dir }}
+          build-configuration: Release
+          upload_build: true
+```
+
+---
+
+## Projects It Builds
+
+- **asset-manager**
+  - `Asset/AssetManager/AssetManager/AssetManager.csproj`
+
+- **mine-model-service**
+  - `MineModel/MineModelService/MineModelService/MineModelService.csproj`
+
+---
+
+## Summary
+
+| Context               | Value                                                               |
+|------------------------|---------------------------------------------------------------------|
+| **Workflow Repo**     | `fmgl-autonomy/imperium`                                            |
+| **Shared Action Repo**| `fmgl-autonomy/devops-ci-workflows-shared`                         |
+| **Shared Action Path**| `.github/actions/dotnet-build-action/action.yml`                   |
+| **Action Reference**  | `./.github/actions/shared/.github/actions/dotnet-build-action`     |
+| **Authentication**    | Uses `GH_PAT` to check out the private shared actions repo         |
+| **Projects Built**    | `asset-manager`, `mine-model-service`                              |
+| **.NET Version**      | 7.0.x                                                               |
+| **Date Generated**    | 2025-04-16                                  |
+
+---
+
+## Notes
+
+- The shared action must be accessible via the provided `GH_PAT`.
+- All paths must be relative to the root of the `imperium` repo.
+- This setup supports adding more projects easily via the matrix configuration.
+
+---
+
+## References
+
+- [GitHub Actions - Matrix Builds](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs)
+- [actions/checkout](https://github.com/actions/checkout)
+- [actions/setup-dotnet](https://github.com/actions/setup-dotnet)
+- [Creating Composite Actions](https://docs.github.com/en/actions/creating-actions/creating-a-composite-action)
