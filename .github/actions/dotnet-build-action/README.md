@@ -1,12 +1,12 @@
-# Build .NET Project - GitHub Action
+# Build and test .NET Project - GitHub Action
 
-This GitHub Action restores, builds, and optionally uploads a .NET project using the dotnet CLI. It's designed to work with monorepos or repositories that may or may not have pre-existing .NET projects.
+This GitHub Action restores, builds, and optionally uploads a .NET project using the dotnet CLI. Intention is to quickly check if composite action to build dotnet projects is still working in case of new changes pushed to this repo.
 
-It also supports **creating test projects dynamically** when no project exists (e.g., in actions testing or validation scenarios), using a matrix strategy across multiple SDK versions and project configurations.
+To achive this it supports **creating test projects dynamically** when no project exists (e.g., in actions testing or validation scenarios), using a matrix strategy across multiple SDK versions and project configurations. But can also be tested with existing projects in current repository.
 
 ---
 
-## Inputs
+## Expected Inputs
 
 | Name                | Description                                           | Required | Default  |
 |---------------------|-------------------------------------------------------|----------|----------|
@@ -44,13 +44,19 @@ When triggered by `push` or `pull_request`, this setup dynamically **creates** a
 name: Building Multiple .NET Projects (includes conditional test)
 
 on:
+  # Run on a push to master or any release branch
   push:
-    branches: [ "main", "release" ]
+    branches:
+      - "master"
+      - "release"
 
+  # Run against any PR
   pull_request:
+  # Allow manual execution
 
   workflow_dispatch:
     inputs:
+      # if there is one or more existing dot net projects in 'devops-ci-workflow-shared' repo
       run_build:
         description: 'Run the test for an existing dotnet project in repo'
         required: true
@@ -102,7 +108,7 @@ jobs:
 ```
 .github/
 ├── workflows/
-│   └── build-dotnet.yml
+│   └── build-dotnet-local-workflow.yml
 └── actions/
     └── dotnet-build-action/
         └── action.yml
@@ -134,7 +140,7 @@ jobs:
 
 # Build Multiple .NET Projects with Shared CI Action
 
-This GitHub Actions workflow is designed for the [`fmgl-autonomy/imperium`](https://github.com/fmgl-autonomy/imperium) repository. It builds multiple .NET projects using a **shared composite action** located in the [`fmgl-autonomy/devops-ci-workflows-shared`](https://github.com/fmgl-autonomy/devops-ci-workflows-shared) repository.
+This sample GitHub Actions workflow is designed for the [`fmgl-autonomy/imperium`](https://github.com/fmgl-autonomy/imperium) repository. It should be able to build multiple .NET projects using a **shared composite action** located in the [`fmgl-autonomy/devops-ci-workflows-shared/.github/actions/dotnet-build-actions`](https://github.com/fmgl-autonomy/devops-ci-workflows-shared/.github/actions/dotnet-build-actions) repository.
 
 ---
 
@@ -143,7 +149,7 @@ This GitHub Actions workflow is designed for the [`fmgl-autonomy/imperium`](http
 Place the following file in your Imperium repository at:
 
 ```
-imperium/.github/workflows/build.yml
+imperium/.github/workflows/dotnet-build-imperium-workflow.yml
 ```
 
 ---
@@ -151,7 +157,7 @@ imperium/.github/workflows/build.yml
 ## What This Workflow Does
 
 - **Triggers** on:
-  - Pushes to `main`
+  - Pushes to `main/master/release`
   - All pull requests
   - Manual dispatch via the GitHub UI (`workflow_dispatch`)
   
@@ -172,19 +178,25 @@ imperium/.github/workflows/build.yml
 name: Build Imperium Projects with Shared CI Action
 
 on:
+  # Run on a push to master or any release branch
   push:
-    branches: [main]
+    branches:
+      - "master"
+      - "release"
+  # Run against any PR
   pull_request:
+  # Allow manual execution
   workflow_dispatch:
 
 jobs:
   build:
     name: build-${ matrix.project.project-name }
-    runs-on: ubuntu-latest
+    runs-on: medium-amd64
 
     strategy:
       matrix:
         dotnet-version: [ '7.0.x' ]
+        # Add "project-name" and resp "app-dir" against which dotnet buil should be triggered
         project:
           - project-name: asset-manager
             app-dir: Asset/AssetManager/AssetManager/AssetManager.csproj
@@ -192,7 +204,8 @@ jobs:
             app-dir: MineModel/MineModelService/MineModelService/MineModelService.csproj
 
     steps:
-      - name: Checkout Code (imperium repo)
+      # (checkout to current repo: imperium
+      - name: Checkout Code 
         uses: actions/checkout@v4
 
       - name: Checkout Shared GitHub Actions Repo (devops-ci-workflows-shared)
@@ -218,34 +231,18 @@ jobs:
 
 ---
 
-## Projects It Builds
+## Projects It Builds, add all imperium projects to this list
 
 - **asset-manager**
   - `Asset/AssetManager/AssetManager/AssetManager.csproj`
 
 - **mine-model-service**
   - `MineModel/MineModelService/MineModelService/MineModelService.csproj`
-
----
-
-## Summary
-
-| Context               | Value                                                               |
-|------------------------|---------------------------------------------------------------------|
-| **Workflow Repo**     | `fmgl-autonomy/imperium`                                            |
-| **Shared Action Repo**| `fmgl-autonomy/devops-ci-workflows-shared`                         |
-| **Shared Action Path**| `.github/actions/dotnet-build-action/action.yml`                   |
-| **Action Reference**  | `./.github/actions/shared/.github/actions/dotnet-build-action`     |
-| **Authentication**    | Uses `GH_PAT` to check out the private shared actions repo         |
-| **Projects Built**    | `asset-manager`, `mine-model-service`                              |
-| **.NET Version**      | 7.0.x                                                               |
-| **Date Generated**    | 2025-04-16                                  |
-
 ---
 
 ## Notes
 
-- The shared action must be accessible via the provided `GH_PAT`.
+- The shared action must be accessible via the provided GitHub Personal Access Token `GH_PAT`.
 - All paths must be relative to the root of the `imperium` repo.
 - This setup supports adding more projects easily via the matrix configuration.
 
