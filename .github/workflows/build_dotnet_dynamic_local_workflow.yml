@@ -50,7 +50,7 @@ jobs:
         shell: bash
         run: |
           rm -rf "${{ matrix.project.app-dir }}"
-          mkdir "${{ matrix.project.my-app-dotnet-01 }}"
+          mkdir "${{ matrix.project.project-name }}"
           dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
           cd "${{ matrix.project.my-app-dotnet-01 }}"
           dotnet new sln -n "${{ matrix.project.app }}"
