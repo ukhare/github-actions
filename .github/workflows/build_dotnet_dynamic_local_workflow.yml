@@ -31,8 +31,10 @@ jobs:
         project:
           - project-name: my-app-dotnet-01
             app-dir: my-app-dotnet-01
+            app: my-app-dotnet-01
           - project-name: my-app-dotnet-02
             app-dir: my-app-dotnet-02
+            app: my-app-dotnet-02
 
     steps:
       - name: Checkout Code
@@ -48,6 +50,7 @@ jobs:
         shell: bash
         run: |
           rm -rf "${{ matrix.project.app-dir }}"
+          mkdir "${{ matrix.project.app-dir }}"
           cd "${{ matrix.project.app-dir }}"
           dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
           dotnet new sln -n "${{ matrix.project.app }}"
