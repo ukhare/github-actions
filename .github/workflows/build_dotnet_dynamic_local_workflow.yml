@@ -1,7 +1,7 @@
 name: Dynamically Build and test .NET Projects
 
 on:
-  # Run on a push to master or any release branch
+  # Run on a push to master or any release branch.
   push:
     branches:
       - "master"
