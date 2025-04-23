@@ -8,6 +8,12 @@ inputs:
   app-dir:
     description: "Path to the .csproj file."
     required: true
+  app:
+    description: "Name of the .NET application, must match the name of the .csproj file"
+    required: true
+  sln-pth:
+    description: 'Path to the app sln file'
+    required: false
   build-configuration:
     description: "Build configuration (e.g., Release, Debug)."
     required: false

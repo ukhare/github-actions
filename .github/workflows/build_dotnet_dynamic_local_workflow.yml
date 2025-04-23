@@ -48,7 +48,14 @@ jobs:
         shell: bash
         run: |
           rm -rf "${{ matrix.project.app-dir }}"
+          cd "${{ matrix.project.app-dir }}"
           dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
+          dotnet new sln -n "${{ matrix.project.app }}"
+          dotnet sln "${{ matrix.project.app }}".sln  add "${{ matrix.project.app-dir }}"/"${{ matrix.project.app }}".csproj
+          dotnet new xunit -n "${{ matrix.project.app }}".Tests
+          dotnet sln "${{ matrix.project.app }}".sln add "${{ matrix.project.app }}".Tests/"${{ matrix.project.app }}".Tests.csproj
+          dotnet add "${{ matrix.project.app }}".Tests/"${{ matrix.project.app }}".Tests.csproj reference "${{ matrix.project.app-dir }}"/"${{ matrix.project.app }}".csproj
+
 
       - name: Build ${{ matrix.project.project-name }}
         uses: ./.github/actions/dotnet-build-action
