@@ -50,9 +50,9 @@ jobs:
         shell: bash
         run: |
           rm -rf "${{ matrix.project.app-dir }}"
-          mkdir "${{ matrix.project.app-dir }}"
-          cd "${{ matrix.project.app-dir }}"
+          mkdir "${{ matrix.project.my-app-dotnet-01 }}"
           dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
+          cd "${{ matrix.project.my-app-dotnet-01 }}"
           dotnet new sln -n "${{ matrix.project.app }}"
           dotnet sln "${{ matrix.project.app }}".sln  add "${{ matrix.project.app-dir }}"/"${{ matrix.project.app }}".csproj
           dotnet new xunit -n "${{ matrix.project.app }}".Tests
