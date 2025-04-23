@@ -52,7 +52,7 @@ jobs:
           rm -rf "${{ matrix.project.project-name }}"
           mkdir "${{ matrix.project.project-name }}"
           dotnet new console -n "${{ matrix.project.project-name }}" -o "${{ matrix.project.app-dir }}"
-          cd "${{ matrix.project.my-app-dotnet-01 }}"
+          cd "${{ matrix.project.project-name }}"
           dotnet new sln -n "${{ matrix.project.app }}"
           dotnet sln "${{ matrix.project.app }}".sln  add "${{ matrix.project.app-dir }}"/"${{ matrix.project.app }}".csproj
           dotnet new xunit -n "${{ matrix.project.app }}".Tests
