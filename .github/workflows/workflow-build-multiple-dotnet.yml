@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+
     steps:
       - name: Set matrix based on event
         id: set-matrix
@@ -54,11 +55,13 @@ jobs:
     needs: prepare-matrix
     if: ${{ fromJson(needs.prepare-matrix.outputs.matrix) != '[]' }}
     runs-on: [ubuntu-latest]
+
     strategy:
       matrix:
         include: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
 
     steps:
+
       - name: Report build started
         if: inputs.port_context != ''
         uses: port-labs/port-github-action@v1
@@ -67,24 +70,25 @@ jobs:
           clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{fromJson(inputs.port_context).runId}}
+          runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
           logMessage: |
-            🏗️ Build started for ref: ${{inputs.ref}} Repository 
-            
+            🏗️ Build started for ref: ${{inputs.ref}} Repository
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Report build started
+        if: inputs.port_context != ''
         uses: port-labs/port-github-action@v1
         with:
           clientId: ${{secrets.PORT_CLIENT_ID}}
           clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{fromJson(inputs.port_context).runId}}
+          runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
           logMessage: |
-            ⚙️ Setting up DotNet... 
-            
+            ⚙️ Setting up DotNet...
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -98,16 +102,17 @@ jobs:
           dotnet new console -n "${{ matrix.project-name }}" -o "${{ matrix.app-dir }}"
 
       - name: Report package building started
+        if: inputs.port_context != ''
         uses: port-labs/port-github-action@v1
         with:
           clientId: ${{secrets.PORT_CLIENT_ID}}
           clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{fromJson(inputs.port_context).runId}}
+          runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
           logMessage: |
             👷Building DotNet packages...Testing and Publishing...hold On 🚀
-            
+
       - name: Build ${{ matrix.project-name }}
         uses: ./.github/actions/dotnet-build-action
         with:
@@ -116,30 +121,28 @@ jobs:
           build-configuration: Release
           upload_build: true
 
-
       - name: Report build success
-        if: success()
+        if: success() && inputs.port_context != ''
         uses: port-labs/port-github-action@v1
         with:
           clientId: ${{secrets.PORT_CLIENT_ID}}
           clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{fromJson(inputs.port_context).runId}}
+          runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
           logMessage: |
             🏅🏆🟢 SUCCESS Building DotNet packages...Testing and Publishing...SUCCESS 🚀
             View Details: '["${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}"]'
 
       - name: Report build failure
-        if: failure()
+        if: failure() && inputs.port_context != ''
         uses: port-labs/port-github-action@v1
         with:
           clientId: ${{secrets.PORT_CLIENT_ID}}
           clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{fromJson(inputs.port_context).runId}}
+          runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
           logMessage: |
             ❌❌ FAILED Building DotNet packages...Testing and Publishing...FAILED 
             View Details: '["${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}"]'
-            
