@@ -11,7 +11,7 @@ on:
         required: false
         default: 'main'
       port_context:
-        required: true
+        required: false
         description: 'Port context including runID'
       run_test:
         description: 'Run the test for dotnet-build-action'
@@ -60,11 +60,12 @@ jobs:
 
     steps:
       - name: Report build started
+        if: inputs.port_context != ''
         uses: port-labs/port-github-action@v1
         with:
           clientId: ${{secrets.PORT_CLIENT_ID}}
           clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
-          baseUrl: https://api getport.io
+          baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{fromJson(inputs.port_context).runId}}
           logMessage: |
@@ -78,7 +79,7 @@ jobs:
         with:
           clientId: ${{secrets.PORT_CLIENT_ID}}
           clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
-          baseUrl: https://api getport.io
+          baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{fromJson(inputs.port_context).runId}}
           logMessage: |
@@ -101,7 +102,7 @@ jobs:
         with:
           clientId: ${{secrets.PORT_CLIENT_ID}}
           clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
-          baseUrl: https://api getport.io
+          baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{fromJson(inputs.port_context).runId}}
           logMessage: |
@@ -122,7 +123,7 @@ jobs:
         with:
           clientId: ${{secrets.PORT_CLIENT_ID}}
           clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
-          baseUrl: https://api getport.io
+          baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{fromJson(inputs.port_context).runId}}
           logMessage: |
@@ -135,7 +136,7 @@ jobs:
         with:
           clientId: ${{secrets.PORT_CLIENT_ID}}
           clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
-          baseUrl: https://api getport.io
+          baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{fromJson(inputs.port_context).runId}}
           logMessage: |
