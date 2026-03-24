@@ -6,6 +6,13 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      ref:
+        description: 'Branch/Tag/Commit to build'
+        required: false
+        default: 'main'
+      port_context:
+        required: true
+        description: 'Port context including runID'
       run_test:
         description: 'Run the test for dotnet-build-action'
         required: true
@@ -52,9 +59,31 @@ jobs:
         include: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
 
     steps:
+      - name: Report build started
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{secrets.PORT_CLIENT_ID}}
+          clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
+          baseUrl: https://api getport.io
+          operation: PATCH_RUN
+          runId: ${{fromJson(inputs.port_context).runId}}
+          logMessage: |
+            🏗️ Build started for ref: ${{inputs.ref}} Repository 
+            
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Report build started
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{secrets.PORT_CLIENT_ID}}
+          clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
+          baseUrl: https://api getport.io
+          operation: PATCH_RUN
+          runId: ${{fromJson(inputs.port_context).runId}}
+          logMessage: |
+            ⚙️ Setting up DotNet... 
+            
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -67,6 +96,17 @@ jobs:
           rm -rf "${{ matrix.project.app-dir }}"
           dotnet new console -n "${{ matrix.project-name }}" -o "${{ matrix.app-dir }}"
 
+      - name: Report package building started
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{secrets.PORT_CLIENT_ID}}
+          clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
+          baseUrl: https://api getport.io
+          operation: PATCH_RUN
+          runId: ${{fromJson(inputs.port_context).runId}}
+          logMessage: |
+            👷Building DotNet packages...Testing and Publishing...hold On 🚀
+            
       - name: Build ${{ matrix.project-name }}
         uses: ./.github/actions/dotnet-build-action
         with:
@@ -74,3 +114,31 @@ jobs:
           app-dir: ${{ matrix.app-dir }}/${{ matrix.project-name }}.csproj
           build-configuration: Release
           upload_build: true
+
+
+      - name: Report build success
+        if: success()
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{secrets.PORT_CLIENT_ID}}
+          clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
+          baseUrl: https://api getport.io
+          operation: PATCH_RUN
+          runId: ${{fromJson(inputs.port_context).runId}}
+          logMessage: |
+            🏅🏆🟢 SUCCESS Building DotNet packages...Testing and Publishing...SUCCESS 🚀
+            View Details: '["${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}"]'
+
+      - name: Report build failure
+        if: failure()
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{secrets.PORT_CLIENT_ID}}
+          clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
+          baseUrl: https://api getport.io
+          operation: PATCH_RUN
+          runId: ${{fromJson(inputs.port_context).runId}}
+          logMessage: |
+            ❌❌ FAILED Building DotNet packages...Testing and Publishing...FAILED 
+            View Details: '["${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}"]'
+            
