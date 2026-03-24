@@ -46,7 +46,7 @@ jobs:
   build:
     needs: prepare-matrix
     if: ${{ fromJson(needs.prepare-matrix.outputs.matrix) != '[]' }}
-    runs-on: [self-hosted, medium-amd64]
+    runs-on: [ubuntu-latest]
     strategy:
       matrix:
         include: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
