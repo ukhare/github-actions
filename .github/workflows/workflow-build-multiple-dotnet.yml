@@ -2,153 +2,148 @@ name: Build Multiple .NET Projects
 
 on:
   push:
-    branches: [ "main", "release" ]
+    branches: ["main", "release"]
+
   pull_request:
+
   workflow_dispatch:
     inputs:
       ref:
-        description: 'Branch/Tag/Commit to build'
+        description: Branch/Tag/Commit to build
         required: false
-        default: 'main'
+        default: main
+
       port_context:
+        description: Port context including runID
         required: false
-        description: 'Port context including runID'
+
       run_test:
-        description: 'Run the test for dotnet-build-action'
+        description: Run the test for dotnet-build-action
         required: true
-        default: 'true'
+        default: "true"
 
 jobs:
+
   prepare-matrix:
     runs-on: ubuntu-latest
+
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
     steps:
       - name: Set matrix based on event
         id: set-matrix
+        shell: bash
         run: |
-          echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
+          echo "Event: $GITHUB_EVENT_NAME"
 
           run_test="false"
+
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
-            run_test=$(jq -r '.inputs.run_test // "false"' "$GITHUB_EVENT_PATH" | tr -d '[:space:]')
+            run_test=$(jq -r '.inputs.run_test // "false"' "$GITHUB_EVENT_PATH")
           fi
 
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" && "$run_test" == "true" ]]; then
             matrix='[
-              {"project-name":"test-app-dotnet-01", "app-dir":"test-app-dotnet-01"},
-              {"project-name":"test-app-dotnet-02", "app-dir":"test-app-dotnet-02"}
+              {"project-name":"test-app-dotnet-01","app-dir":"test-app-dotnet-01"},
+              {"project-name":"test-app-dotnet-02","app-dir":"test-app-dotnet-02"}
             ]'
+
           elif [[ "$GITHUB_EVENT_NAME" == "push" || "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             matrix='[
-              {"project-name":"my-app-dotnet-01", "app-dir":"my-app-dotnet-01"},
-              {"project-name":"my-app-dotnet-02", "app-dir":"my-app-dotnet-02"}
+              {"project-name":"my-app-dotnet-01","app-dir":"my-app-dotnet-01"},
+              {"project-name":"my-app-dotnet-02","app-dir":"my-app-dotnet-02"}
             ]'
+
           else
             matrix='[]'
           fi
 
           echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
 
+
   build:
     needs: prepare-matrix
     if: ${{ fromJson(needs.prepare-matrix.outputs.matrix) != '[]' }}
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         include: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
 
     steps:
 
-      - name: Report build started
-        if: inputs.port_context != ''
-        uses: port-labs/port-github-action@v1
-        with:
-          clientId: ${{secrets.PORT_CLIENT_ID}}
-          clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
-          baseUrl: https://api.getport.io
-          operation: PATCH_RUN
-          runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
-          logMessage: |
-            🏗️ Build started for ref: ${{inputs.ref}} Repository
-
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Report build started
-        if: inputs.port_context != ''
-        uses: port-labs/port-github-action@v1
-        with:
-          clientId: ${{secrets.PORT_CLIENT_ID}}
-          clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
-          baseUrl: https://api.getport.io
-          operation: PATCH_RUN
-          runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
-          logMessage: |
-            ⚙️ Setting up DotNet...
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '7.0.x'
+          dotnet-version: "7.0.x"
 
-      - name: Create .NET Project - ${{ matrix.project-name }}
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true'
-        shell: bash
-        run: |
-          rm -rf "${{ matrix.project.app-dir }}"
-          dotnet new console -n "${{ matrix.project-name }}" -o "${{ matrix.app-dir }}"
-
-      - name: Report package building started
+      - name: Report build started
         if: inputs.port_context != ''
         uses: port-labs/port-github-action@v1
         with:
-          clientId: ${{secrets.PORT_CLIENT_ID}}
-          clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
+          runId: ${{ fromJson(inputs.port_context).runId }}
           logMessage: |
-            👷Building DotNet packages...Testing and Publishing...hold On 🚀
+            🏗️ Starting build for ${{ matrix.project-name }}
+
+      - name: Create .NET Project (test mode)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_test == 'true'
+        shell: bash
+        run: |
+          rm -rf "${{ matrix.app-dir }}"
+          dotnet new console \
+            -n "${{ matrix.project-name }}" \
+            -o "${{ matrix.app-dir }}"
 
       - name: Build ${{ matrix.project-name }}
         uses: ./.github/actions/dotnet-build-action
         with:
           project-name: ${{ matrix.project-name }}
           app-dir: ${{ matrix.app-dir }}/${{ matrix.project-name }}.csproj
+          app: ${{ matrix.project-name }}
           build-configuration: Release
           upload_build: true
-          #Pass port context
-          port-client-id: ${{secrets.PORT_CLIENT_ID}}
-          port-client-secret: ${{secrets.PORT_CLIENT_SECRET}}
-          port-run-id: ${{fromJson(inputs.port_context).runId}}
+
+          port-client-id: ${{ secrets.PORT_CLIENT_ID }}
+          port-client-secret: ${{ secrets.PORT_CLIENT_SECRET }}
+          port-run-id: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
 
       - name: Report build success
         if: success() && inputs.port_context != ''
         uses: port-labs/port-github-action@v1
         with:
-          clientId: ${{secrets.PORT_CLIENT_ID}}
-          clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
-          status: "SUCCESS"
+          runId: ${{ fromJson(inputs.port_context).runId }}
+          status: SUCCESS
           logMessage: |
-            🏅🏆🟢 SUCCESS Building DotNet packages...Testing and Publishing...SUCCESS 🚀
-            View Details: ${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}
+            🟢 SUCCESS building ${{ matrix.project-name }}
+
+            View details:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Report build failure
         if: failure() && inputs.port_context != ''
         uses: port-labs/port-github-action@v1
         with:
-          clientId: ${{secrets.PORT_CLIENT_ID}}
-          clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
-          runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
-          status: "FAILURE"
+          runId: ${{ fromJson(inputs.port_context).runId }}
+          status: FAILURE
           logMessage: |
-            ❌❌ FAILED Building DotNet packages...Testing and Publishing...FAILED 
-            View Details: ${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}
+            ❌ FAILED building ${{ matrix.project-name }}
+
+            View details:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
