@@ -15,30 +15,29 @@ inputs:
     required: true
 
   sln-path:
-    description: "Path to the app sln file."
+    description: "Path to the solution file."
     required: false
 
   build-configuration:
-    description: "Build configuration (e.g., Release, Debug)."
+    description: "Build configuration (Release/Debug)."
     required: false
     default: "Release"
 
   upload_build:
-    description: "Set to true to upload the build artifacts."
+    description: "Set to true to upload build artifacts."
     required: false
     default: "false"
 
-  # Port inputs
   port-client-id:
-    description: "Port Client ID for status reporting"
+    description: "Port Client ID"
     required: false
 
   port-client-secret:
-    description: "Port Client Secret for status reporting"
+    description: "Port Client Secret"
     required: false
 
   port-run-id:
-    description: "Port Run ID for status reporting"
+    description: "Port Run ID"
     required: false
 
 runs:
@@ -78,17 +77,17 @@ runs:
         operation: PATCH_RUN
         runId: ${{ inputs.port-run-id }}
         logMessage: |
-          📦 Restoring NuGet packages for ${{ inputs.project-name }}...
+          📦 Restoring NuGet packages for ${{ inputs.project-name }}
 
     - name: Restore NuGet packages
       id: restore
       shell: bash
       run: |
         if ! dotnet restore "${{ inputs.app-dir }}"; then
-          echo "::error title=Restore Failed::Failed to restore NuGet packages."
+          echo "::error title=Restore Failed::NuGet restore failed."
           exit 1
         fi
-        echo "✅ NuGet packages restored successfully"
+        echo "✅ NuGet packages restored"
 
     - name: Report build started
       if: inputs.port-run-id != ''
@@ -100,11 +99,10 @@ runs:
         operation: PATCH_RUN
         runId: ${{ inputs.port-run-id }}
         logMessage: |
-          🔨 Building ${{ inputs.project-name }}...
+          🔨 Building ${{ inputs.project-name }}
           ⚙️ Configuration: ${{ inputs.build-configuration }}
-          📂 Output: ./dotnet_build_output-${{ inputs.project-name }}
 
-    - name: Build .NET project
+    - name: Build project
       id: build
       shell: bash
       run: |
@@ -116,32 +114,34 @@ runs:
         dotnet build "${{ inputs.app-dir }}" \
           --configuration "${{ inputs.build-configuration }}" \
           --no-restore \
-          -o "${output_dir}" \
-          --verbosity diagnostic \
-          | tee "${log_file}"
+          -o "$output_dir" \
+          --verbosity normal \
+          | tee "$log_file"
 
-        echo "✅ Build completed successfully"
+        echo "Build finished"
 
-    - name: Annotate warnings and errors
+    - name: Analyze warnings and errors
       id: annotate
       shell: bash
       run: |
         log_file="${{ inputs.project-name }}/build.log"
 
-        warning_count=$(grep -c ": warning [A-Z0-9]\+:" "${log_file}" || echo "0")
-        error_count=$(grep -c ": error [A-Z0-9]\+:" "${log_file}" || echo "0")
+        warning_count=$(grep -c ": warning " "$log_file" 2>/dev/null || true)
+        error_count=$(grep -c ": error " "$log_file" 2>/dev/null || true)
 
-        echo "warning_count=${warning_count}" >> $GITHUB_OUTPUT
-        echo "error_count=${error_count}" >> $GITHUB_OUTPUT
+        warning_count=${warning_count:-0}
+        error_count=${error_count:-0}
 
-        awk '
-        /: warning [A-Z0-9]+:/ {
-            print "::warning title=Build Warning::" $0
-        }
-        /: error [A-Z0-9]+:/ {
-            print "::error title=Build Error::" $0
-        }
-        ' "${log_file}"
+        echo "warning_count=$warning_count" >> "$GITHUB_OUTPUT"
+        echo "error_count=$error_count" >> "$GITHUB_OUTPUT"
+
+        grep ": warning " "$log_file" | while read line; do
+          echo "::warning::$line"
+        done || true
+
+        grep ": error " "$log_file" | while read line; do
+          echo "::error::$line"
+        done || true
 
     - name: Upload build artifacts
       id: upload
@@ -152,7 +152,7 @@ runs:
         path: ./dotnet_build_output-${{ inputs.project-name }}
         if-no-files-found: ignore
 
-    - name: Report overall success
+    - name: Report success
       if: success() && inputs.port-run-id != ''
       uses: port-labs/port-github-action@v1
       with:
@@ -162,7 +162,7 @@ runs:
         operation: PATCH_RUN
         runId: ${{ inputs.port-run-id }}
         logMessage: |
-          ✅ ${{ inputs.project-name }} built
-          ⚙️ Configuration: ${{ inputs.build-configuration }}
-          📦 Artifacts uploaded: ${{ inputs.upload_build }}
+          ✅ Build completed for ${{ inputs.project-name }}
           ⚠️ Warnings: ${{ steps.annotate.outputs.warning_count }}
+          ❌ Errors: ${{ steps.annotate.outputs.error_count }}
+          📦 Artifacts uploaded: ${{ inputs.upload_build }}
