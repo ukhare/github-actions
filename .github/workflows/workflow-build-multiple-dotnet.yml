@@ -130,9 +130,10 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
+          status: "SUCCESS"
           logMessage: |
             🏅🏆🟢 SUCCESS Building DotNet packages...Testing and Publishing...SUCCESS 🚀
-            View Details: '["${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}"]'
+            View Details: "${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}
 
       - name: Report build failure
         if: failure() && inputs.port_context != ''
@@ -143,6 +144,7 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
+          status: "FAILURE"
           logMessage: |
             ❌❌ FAILED Building DotNet packages...Testing and Publishing...FAILED 
-            View Details: '["${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}"]'
+            View Details: ${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}
