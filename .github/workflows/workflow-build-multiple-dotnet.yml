@@ -120,6 +120,10 @@ jobs:
           app-dir: ${{ matrix.app-dir }}/${{ matrix.project-name }}.csproj
           build-configuration: Release
           upload_build: true
+          #Pass port context
+          port-client-id: ${{secrets.PORT_CLIENT_ID}}
+          port-client-secret: ${{secrets.PORT_CLIENT_SECRET}}
+          port-run-id: ${{fromJson(inputs.port_context).runId}}
 
       - name: Report build success
         if: success() && inputs.port_context != ''
