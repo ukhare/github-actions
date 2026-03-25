@@ -1,55 +1,118 @@
 name: "Building .NET Project"
-description: "Restores, builds, and optionally uploads a .NET project."
+description: "Restores, builds, and optionally uploads a .NET project with Port status reporting."
 
 inputs:
   project-name:
     description: "Name of the .NET project."
     required: true
+
   app-dir:
     description: "Path to the .csproj file."
     required: true
+
   app:
-    description: "Name of the .NET application, must match the name of the .csproj file"
+    description: "Name of the .NET application, must match the name of the .csproj file."
     required: true
-  sln-pth:
-    description: 'Path to the app sln file'
+
+  sln-path:
+    description: "Path to the app sln file."
     required: false
+
   build-configuration:
     description: "Build configuration (e.g., Release, Debug)."
     required: false
     default: "Release"
+
   upload_build:
     description: "Set to true to upload the build artifacts."
     required: false
     default: "false"
 
+  # Port inputs
+  port-client-id:
+    description: "Port Client ID for status reporting"
+    required: false
+
+  port-client-secret:
+    description: "Port Client Secret for status reporting"
+    required: false
+
+  port-run-id:
+    description: "Port Run ID for status reporting"
+    required: false
+
 runs:
   using: "composite"
+
   steps:
+    - name: Report validation started
+      if: inputs.port-run-id != ''
+      uses: port-labs/port-github-action@v1
+      with:
+        clientId: ${{ inputs.port-client-id }}
+        clientSecret: ${{ inputs.port-client-secret }}
+        baseUrl: https://api.getport.io
+        operation: PATCH_RUN
+        runId: ${{ inputs.port-run-id }}
+        logMessage: |
+          🔍 Validating project: ${{ inputs.project-name }}
+          📁 Project path: ${{ inputs.app-dir }}
 
     - name: Validate project path
+      id: validate
       shell: bash
       run: |
         if [ ! -f "${{ inputs.app-dir }}" ]; then
           echo "::error title=Missing Project File::The project file '${{ inputs.app-dir }}' does not exist."
           exit 1
         fi
-        
+        echo "✅ Project file validated successfully"
+
+    - name: Report restore started
+      if: inputs.port-run-id != ''
+      uses: port-labs/port-github-action@v1
+      with:
+        clientId: ${{ inputs.port-client-id }}
+        clientSecret: ${{ inputs.port-client-secret }}
+        baseUrl: https://api.getport.io
+        operation: PATCH_RUN
+        runId: ${{ inputs.port-run-id }}
+        logMessage: |
+          📦 Restoring NuGet packages for ${{ inputs.project-name }}...
+
     - name: Restore NuGet packages
+      id: restore
       shell: bash
       run: |
         if ! dotnet restore "${{ inputs.app-dir }}"; then
           echo "::error title=Restore Failed::Failed to restore NuGet packages."
           exit 1
         fi
+        echo "✅ NuGet packages restored successfully"
+
+    - name: Report build started
+      if: inputs.port-run-id != ''
+      uses: port-labs/port-github-action@v1
+      with:
+        clientId: ${{ inputs.port-client-id }}
+        clientSecret: ${{ inputs.port-client-secret }}
+        baseUrl: https://api.getport.io
+        operation: PATCH_RUN
+        runId: ${{ inputs.port-run-id }}
+        logMessage: |
+          🔨 Building ${{ inputs.project-name }}...
+          ⚙️ Configuration: ${{ inputs.build-configuration }}
+          📂 Output: ./dotnet_build_output-${{ inputs.project-name }}
 
     - name: Build .NET project
+      id: build
       shell: bash
       run: |
         output_dir="./dotnet_build_output-${{ inputs.project-name }}"
         log_file="${{ inputs.project-name }}/build.log"
 
         mkdir -p "${{ inputs.project-name }}"
+
         dotnet build "${{ inputs.app-dir }}" \
           --configuration "${{ inputs.build-configuration }}" \
           --no-restore \
@@ -57,10 +120,20 @@ runs:
           --verbosity diagnostic \
           | tee "${log_file}"
 
+        echo "✅ Build completed successfully"
+
     - name: Annotate warnings and errors
+      id: annotate
       shell: bash
       run: |
         log_file="${{ inputs.project-name }}/build.log"
+
+        warning_count=$(grep -c ": warning [A-Z0-9]\+:" "${log_file}" || echo "0")
+        error_count=$(grep -c ": error [A-Z0-9]\+:" "${log_file}" || echo "0")
+
+        echo "warning_count=${warning_count}" >> $GITHUB_OUTPUT
+        echo "error_count=${error_count}" >> $GITHUB_OUTPUT
+
         awk '
         /: warning [A-Z0-9]+:/ {
             print "::warning title=Build Warning::" $0
@@ -71,9 +144,25 @@ runs:
         ' "${log_file}"
 
     - name: Upload build artifacts
-      if: ${{ inputs.upload_build == 'true' }}
+      id: upload
+      if: inputs.upload_build == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: build-artifacts-${{ inputs.project-name }}
         path: ./dotnet_build_output-${{ inputs.project-name }}
         if-no-files-found: ignore
+
+    - name: Report overall success
+      if: success() && inputs.port-run-id != ''
+      uses: port-labs/port-github-action@v1
+      with:
+        clientId: ${{ inputs.port-client-id }}
+        clientSecret: ${{ inputs.port-client-secret }}
+        baseUrl: https://api.getport.io
+        operation: PATCH_RUN
+        runId: ${{ inputs.port-run-id }}
+        logMessage: |
+          ✅ ${{ inputs.project-name }} built
+          ⚙️ Configuration: ${{ inputs.build-configuration }}
+          📦 Artifacts uploaded: ${{ inputs.upload_build }}
+          ⚠️ Warnings: ${{ steps.annotate.outputs.warning_count }}
