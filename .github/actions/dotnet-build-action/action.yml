@@ -35,20 +35,6 @@ runs:
           exit 1
         fi
         
-    - name: Report project paths 
-      if: inputs.port_context != ''
-      uses: port-labs/port-github-action@v1
-      with:
-        clientId: ${{secrets.PORT_CLIENT_ID}}
-        clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
-        baseUrl: https://api.getport.io
-        operation: PATCH_RUN
-        runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
-        status: "SUCCESS"
-        logMessage: |
-            🏅🏆🟢 SUCCESSFULLY validated DotNet project paths
-            View Details: ${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}
-            
     - name: Restore NuGet packages
       shell: bash
       run: |
@@ -57,20 +43,6 @@ runs:
           exit 1
         fi
 
-    - name: Report restoring
-      if: success() && inputs.port_context != ''
-      uses: port-labs/port-github-action@v1
-      with:
-        clientId: ${{secrets.PORT_CLIENT_ID}}
-        clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
-        baseUrl: https://api.getport.io
-        operation: PATCH_RUN
-        runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
-        status: "SUCCESS"
-        logMessage: |
-            🏅🏆🟢 SUCCESSFULLY restored DotNet packages...
-            View Details: ${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}
-            
     - name: Build .NET project
       shell: bash
       run: |
@@ -85,20 +57,6 @@ runs:
           --verbosity diagnostic \
           | tee "${log_file}"
 
-    - name: Report build status 
-      if: success() && inputs.port_context != ''
-      uses: port-labs/port-github-action@v1
-      with:
-        clientId: ${{secrets.PORT_CLIENT_ID}}
-        clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
-        baseUrl: https://api.getport.io
-        operation: PATCH_RUN
-        runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
-        status: "SUCCESS"
-        logMessage: |
-            🏅🏆🟢 SUCCESSFULLY build DotNet packages...
-            View Details: ${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}
-            
     - name: Annotate warnings and errors
       shell: bash
       run: |
@@ -119,18 +77,3 @@ runs:
         name: build-artifacts-${{ inputs.project-name }}
         path: ./dotnet_build_output-${{ inputs.project-name }}
         if-no-files-found: ignore
-
-    - name: Report Artifacts
-      if: success() && inputs.port_context != ''
-      uses: port-labs/port-github-action@v1
-      with:
-        clientId: ${{secrets.PORT_CLIENT_ID}}
-        clientSecret: ${{secrets.PORT_CLIENT_SECRET}}
-        baseUrl: https://api.getport.io
-        operation: PATCH_RUN
-        runId: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
-        status: "SUCCESS"
-        logMessage: |
-            🏅🏆🟢 SUCCESSFULLY generated DotNet packages...
-            View Details: ${{github.server_url}}/{{github.repository}}/actions/runs/${{github.run_id}}
-            
