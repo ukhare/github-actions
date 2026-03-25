@@ -18,7 +18,7 @@ on:
         required: false
 
       run_test:
-        description: Run the test for dotnet-build-action
+        description: Run test mode
         required: true
         default: "true"
 
@@ -26,7 +26,6 @@ jobs:
 
   prepare-matrix:
     runs-on: ubuntu-latest
-
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
@@ -48,13 +47,11 @@ jobs:
               {"project-name":"test-app-dotnet-01","app-dir":"test-app-dotnet-01"},
               {"project-name":"test-app-dotnet-02","app-dir":"test-app-dotnet-02"}
             ]'
-
           elif [[ "$GITHUB_EVENT_NAME" == "push" || "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             matrix='[
               {"project-name":"my-app-dotnet-01","app-dir":"my-app-dotnet-01"},
               {"project-name":"my-app-dotnet-02","app-dir":"my-app-dotnet-02"}
             ]'
-
           else
             matrix='[]'
           fi
@@ -116,6 +113,13 @@ jobs:
           port-client-secret: ${{ secrets.PORT_CLIENT_SECRET }}
           port-run-id: ${{ inputs.port_context != '' && fromJson(inputs.port_context).runId || '' }}
 
+
+  finalize:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+
       - name: Report build success
         if: success() && inputs.port_context != ''
         uses: port-labs/port-github-action@v1
@@ -127,9 +131,9 @@ jobs:
           runId: ${{ fromJson(inputs.port_context).runId }}
           status: SUCCESS
           logMessage: |
-            🟢 SUCCESS building ${{ matrix.project-name }}
+            🟢 All .NET builds completed successfully
 
-            View details:
+            View workflow:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Report build failure
@@ -143,7 +147,7 @@ jobs:
           runId: ${{ fromJson(inputs.port_context).runId }}
           status: FAILURE
           logMessage: |
-            ❌ FAILED building ${{ matrix.project-name }}
+            ❌ One or more builds failed
 
-            View details:
+            View workflow:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
